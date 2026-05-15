@@ -1,0 +1,6 @@
+@Shopify_Learning_HostAddress = http://localhost:5159
+
+GET {{Shopify_Learning_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

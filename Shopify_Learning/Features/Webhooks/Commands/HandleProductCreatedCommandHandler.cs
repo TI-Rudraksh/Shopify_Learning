@@ -1,0 +1,68 @@
+using MediatR;
+using ShopifyIntegration.Domain.Entities;
+using ShopifyIntegration.Domain.Repositories;
+using ShopifyIntegration.Infrastructure.Data.Helpers;
+
+namespace ShopifyIntegration.Features.Webhooks.Commands;
+
+public sealed class HandleProductCreatedCommandHandler
+    : IRequestHandler<HandleProductCreatedCommand, Unit>
+{
+    private readonly IProductRepository _products;
+    private readonly IWebhookEventRepository _webhookEvents;
+
+    public HandleProductCreatedCommandHandler(
+        IProductRepository products,
+        IWebhookEventRepository webhookEvents)
+    {
+        _products      = products;
+        _webhookEvents = webhookEvents;
+    }
+
+    public async Task<Unit> Handle(
+        HandleProductCreatedCommand command, CancellationToken cancellationToken)
+    {
+        if (await _webhookEvents.ExistsProcessedAsync(
+                "products/create", command.NumericId, cancellationToken))
+            return Unit.Value;
+
+        try
+        {
+            var product = new Product
+            {
+                ShopifyGid = ShopifyGidHelper.BuildProductGid(command.NumericId),
+                NumericId  = command.NumericId,
+                Title      = command.Title,
+                Vendor     = command.Vendor,
+                Status     = command.Status,
+                CreatedAt  = DateTimeOffset.UtcNow,
+                UpdatedAt  = command.UpdatedAt.ToUniversalTime(),
+            };
+            await _products.UpsertAsync(product, cancellationToken);
+
+            await _webhookEvents.AddAsync(new WebhookEvent
+            {
+                Topic            = "products/create",
+                ShopifyNumericId = command.NumericId,
+                RawPayload       = "",
+                ProcessedAt      = DateTimeOffset.UtcNow,
+                Status           = "processed",
+            }, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            await _webhookEvents.AddAsync(new WebhookEvent
+            {
+                Topic            = "products/create",
+                ShopifyNumericId = command.NumericId,
+                RawPayload       = "",
+                ProcessedAt      = DateTimeOffset.UtcNow,
+                Status           = "failed",
+                ErrorMessage     = ex.Message,
+            }, cancellationToken);
+            throw;
+        }
+
+        return Unit.Value;
+    }
+}
