@@ -35,6 +35,24 @@ public sealed class GlobalExceptionMiddleware
             context.Response.ContentType = "application/json";
             await context.Response.WriteAsJsonAsync(new { errors = ex.ShopifyErrors });
         }
+        catch (ShopifyFulfillmentException ex)
+        {
+            context.Response.StatusCode  = StatusCodes.Status502BadGateway;
+            context.Response.ContentType = "application/json";
+            await context.Response.WriteAsJsonAsync(new { errors = ex.ShopifyErrors });
+        }
+        catch (ShopifyOrderException ex)
+        {
+            context.Response.StatusCode  = StatusCodes.Status502BadGateway;
+            context.Response.ContentType = "application/json";
+            await context.Response.WriteAsJsonAsync(new { errors = ex.ShopifyErrors });
+        }
+        catch (KeyNotFoundException ex)
+        {
+            context.Response.StatusCode  = StatusCodes.Status404NotFound;
+            context.Response.ContentType = "application/json";
+            await context.Response.WriteAsJsonAsync(new { error = ex.Message });
+        }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Unhandled exception");

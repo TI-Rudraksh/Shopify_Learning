@@ -18,6 +18,7 @@ public sealed class OrderConfiguration : IEntityTypeConfiguration<Order>
         builder.Property(o => o.FulfillmentStatus).HasColumnName("fulfillment_status").IsRequired();
         builder.Property(o => o.TotalPrice).HasColumnName("total_price").HasColumnType("numeric(18,2)").IsRequired();
         builder.Property(o => o.Currency).HasColumnName("currency").IsRequired();
+        builder.Property(o => o.Note).HasColumnName("note");
         builder.Property(o => o.CustomerId).HasColumnName("customer_id");
         builder.Property(o => o.CreatedAt).HasColumnName("created_at").IsRequired();
         builder.Property(o => o.UpdatedAt).HasColumnName("updated_at").IsRequired();
@@ -36,5 +37,10 @@ public sealed class OrderConfiguration : IEntityTypeConfiguration<Order>
                .WithOne(f => f.Order)
                .HasForeignKey(f => f.OrderId)
                .HasConstraintName("fk_fulfillments_orders");
+        builder.HasMany(o => o.NoteAttributes)
+               .WithOne(na => na.Order)
+               .HasForeignKey(na => na.OrderId)
+               .OnDelete(DeleteBehavior.Cascade)
+               .HasConstraintName("fk_order_note_attributes_orders");
     }
 }

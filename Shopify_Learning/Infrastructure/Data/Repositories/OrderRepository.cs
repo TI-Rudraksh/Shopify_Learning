@@ -26,6 +26,7 @@ public sealed class OrderRepository : IOrderRepository
             var byLocalId = await _db.Orders
                 .Include(o => o.LineItems)
                 .Include(o => o.Fulfillments)
+                .Include(o => o.NoteAttributes)
                 .AsSplitQuery()
                 .FirstOrDefaultAsync(o => o.Id == localId, ct);
             if (byLocalId is not null) return byLocalId;
@@ -37,6 +38,7 @@ public sealed class OrderRepository : IOrderRepository
             var byNumericId = await _db.Orders
                 .Include(o => o.LineItems)
                 .Include(o => o.Fulfillments)
+                .Include(o => o.NoteAttributes)
                 .AsSplitQuery()
                 .FirstOrDefaultAsync(o => o.NumericId == numericId, ct);
             if (byNumericId is not null) return byNumericId;
@@ -46,6 +48,7 @@ public sealed class OrderRepository : IOrderRepository
         return await _db.Orders
             .Include(o => o.LineItems)
             .Include(o => o.Fulfillments)
+            .Include(o => o.NoteAttributes)
             .AsSplitQuery()
             .FirstOrDefaultAsync(o => o.ShopifyGid == orderId, ct);
     }
@@ -54,6 +57,7 @@ public sealed class OrderRepository : IOrderRepository
         => _db.Orders
             .Include(o => o.LineItems)
             .Include(o => o.Fulfillments)
+            .Include(o => o.NoteAttributes)
             .AsSplitQuery()
             .FirstOrDefaultAsync(o => o.ShopifyGid == shopifyGid, ct);
 
@@ -61,6 +65,7 @@ public sealed class OrderRepository : IOrderRepository
         => _db.Orders
             .Include(o => o.LineItems)
             .Include(o => o.Fulfillments)
+            .Include(o => o.NoteAttributes)
             .AsSplitQuery()
             .FirstOrDefaultAsync(o => o.NumericId == numericId, ct);
 
@@ -68,6 +73,7 @@ public sealed class OrderRepository : IOrderRepository
     {
         var existing = await _db.Orders
             .Include(o => o.LineItems)
+            .Include(o => o.NoteAttributes)
             .FirstOrDefaultAsync(o => o.ShopifyGid == order.ShopifyGid, ct);
 
         if (existing is null)
@@ -81,6 +87,7 @@ public sealed class OrderRepository : IOrderRepository
             existing.FulfillmentStatus = order.FulfillmentStatus;
             existing.TotalPrice        = order.TotalPrice;
             existing.Currency          = order.Currency;
+            existing.Note              = order.Note;
             existing.CustomerId        = order.CustomerId;
             existing.CancelledAt       = order.CancelledAt;
             existing.UpdatedAt         = order.UpdatedAt;
@@ -98,6 +105,20 @@ public sealed class OrderRepository : IOrderRepository
         => _db.Orders
             .Include(o => o.LineItems)
             .Include(o => o.Fulfillments)
+            .Include(o => o.NoteAttributes)
             .AsSplitQuery()
             .ToListAsync(ct);
+
+    public async Task AddNoteAttributesAsync(
+        int orderId,
+        IEnumerable<OrderNoteAttribute> attributes,
+        CancellationToken ct = default)
+    {
+        foreach (var attr in attributes)
+        {
+            attr.OrderId = orderId;
+        }
+        await _db.OrderNoteAttributes.AddRangeAsync(attributes, ct);
+        await _db.SaveChangesAsync(ct);
+    }
 }

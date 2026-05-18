@@ -13,9 +13,10 @@ public sealed class ShopifyDbContext : DbContext
     public DbSet<InventoryLevel> InventoryLevels { get; set; } = null!;
     public DbSet<Location>       Locations       { get; set; } = null!;
     public DbSet<Customer>       Customers       { get; set; } = null!;
-    public DbSet<Order>          Orders          { get; set; } = null!;
-    public DbSet<OrderLineItem>  OrderLineItems  { get; set; } = null!;
-    public DbSet<Fulfillment>    Fulfillments    { get; set; } = null!;
+    public DbSet<Order>               Orders               { get; set; } = null!;
+    public DbSet<OrderLineItem>       OrderLineItems       { get; set; } = null!;
+    public DbSet<OrderNoteAttribute>  OrderNoteAttributes  { get; set; } = null!;
+    public DbSet<Fulfillment>         Fulfillments         { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

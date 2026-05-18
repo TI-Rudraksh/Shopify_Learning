@@ -56,6 +56,7 @@ builder.Services.AddScoped<ICustomerRepository, CustomerRepository>();
 builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 builder.Services.AddScoped<IFulfillmentRepository, FulfillmentRepository>();
 builder.Services.AddScoped<IShopifyFulfillmentService, ShopifyFulfillmentService>();
+builder.Services.AddScoped<IShopifyOrderService, ShopifyOrderService>();
 
 var app = builder.Build();
 
