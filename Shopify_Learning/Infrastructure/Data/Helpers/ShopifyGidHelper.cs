@@ -34,4 +34,8 @@ public static class ShopifyGidHelper
     // Builds "gid://shopify/Fulfillment/123456789" from a numeric id
     public static string BuildFulfillmentGid(long numericId) =>
         $"gid://shopify/Fulfillment/{numericId}";
+
+    // Builds "gid://shopify/LineItem/123456789" from a numeric id
+    public static string BuildLineItemGid(long numericId) =>
+        $"gid://shopify/LineItem/{numericId}";
 }

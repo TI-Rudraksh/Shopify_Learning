@@ -19,6 +19,7 @@ public sealed class FulfillmentConfiguration : IEntityTypeConfiguration<Fulfillm
         builder.Property(f => f.TrackingCompany).HasColumnName("tracking_company");
         builder.Property(f => f.TrackingUrl).HasColumnName("tracking_url");
         builder.Property(f => f.FulfillmentOrderGid).HasColumnName("fulfillment_order_gid");
+        builder.Property(f => f.FulfilledLineItemGids).HasColumnName("fulfilled_line_item_gids");
         builder.Property(f => f.CreatedAt).HasColumnName("created_at").IsRequired();
         builder.Property(f => f.UpdatedAt).HasColumnName("updated_at").IsRequired();
         builder.HasIndex(f => f.ShopifyGid).IsUnique();

@@ -1,5 +1,6 @@
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using ShopifyIntegration.DTOs;
 using ShopifyIntegration.Features.Orders.Commands;
 
 namespace ShopifyIntegration.API.Controllers;
@@ -25,6 +26,26 @@ public sealed class OrdersController : ControllerBase
     {
         var command = new FulfillOrderCommand(orderId, trackingNumber, trackingCompany);
         var result  = await _mediator.Send(command, ct);
+        return Accepted(result);
+    }
+
+    /// <summary>
+    /// Fulfills specific line items of the given order.
+    /// orderId can be a local int Id, a Shopify numeric Id, or a Shopify GID.
+    /// </summary>
+    [HttpPost("{orderId}/fulfill-items")]
+    public async Task<IActionResult> FulfillOrderLineItems(
+        string orderId,
+        [FromBody] PartialFulfillmentRequest request,
+        CancellationToken ct = default)
+    {
+        var command = new FulfillOrderLineItemsCommand(
+            orderId,
+            request.LineItemIds,
+            request.TrackingNumber,
+            request.TrackingCompany,
+            request.NotifyCustomer);
+        var result = await _mediator.Send(command, ct);
         return Accepted(result);
     }
 }

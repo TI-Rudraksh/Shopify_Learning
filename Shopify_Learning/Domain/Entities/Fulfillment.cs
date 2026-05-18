@@ -11,7 +11,8 @@ public sealed class Fulfillment
     public string?        TrackingNumber      { get; set; }       // nullable
     public string?        TrackingCompany     { get; set; }       // nullable
     public string?        TrackingUrl         { get; set; }       // nullable
-    public string?        FulfillmentOrderGid { get; set; }       // nullable
-    public DateTimeOffset CreatedAt           { get; set; }       // timestamptz, not null
+    public string?        FulfillmentOrderGid  { get; set; }       // nullable
+    public string?        FulfilledLineItemGids { get; set; }      // JSON array of OrderLineItem ShopifyGids
+    public DateTimeOffset CreatedAt            { get; set; }       // timestamptz, not null
     public DateTimeOffset UpdatedAt           { get; set; }       // timestamptz, not null
 }

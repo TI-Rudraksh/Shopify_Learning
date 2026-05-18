@@ -15,4 +15,29 @@ query getFulfillmentOrders($orderId: ID!) {
     }
   }
 }";
+
+    public const string GetFulfillmentOrdersWithLineItems = @"
+query getFulfillmentOrdersWithLineItems($orderId: ID!) {
+  order(id: $orderId) {
+    fulfillmentOrders(first: 10) {
+      edges {
+        node {
+          id
+          status
+          lineItems(first: 50) {
+            edges {
+              node {
+                id
+                remainingQuantity
+                lineItem {
+                  id
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}";
 }
