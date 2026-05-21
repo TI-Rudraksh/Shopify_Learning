@@ -23,6 +23,6 @@ public sealed class InventoryLevelConfiguration : IEntityTypeConfiguration<Inven
                .WithMany()
                .HasForeignKey(i => i.ProductId)
                .HasConstraintName("fk_inventory_levels_products");
-        builder.HasIndex(i => new { i.ProductId, i.LocationGid }).IsUnique();
+        builder.HasIndex(i => new { i.InventoryItemGid, i.LocationGid }).IsUnique();
     }
 }

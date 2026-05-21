@@ -1,8 +1,10 @@
+using Hangfire;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using ShopifyIntegration.DTOs;
 using ShopifyIntegration.Features.Orders.Commands;
 using ShopifyIntegration.Features.Orders.Queries;
+using ShopifyIntegration.Jobs;
 
 namespace ShopifyIntegration.API.Controllers;
 
@@ -11,43 +13,65 @@ namespace ShopifyIntegration.API.Controllers;
 public sealed class OrdersController : ControllerBase
 {
     private readonly IMediator _mediator;
+    private readonly IBackgroundJobClient _jobs;
 
-    public OrdersController(IMediator mediator) => _mediator = mediator;
-
-    /// <summary>
-    /// Fulfills all open fulfillment orders for the given order.
-    /// orderId can be a local int Id, a Shopify numeric Id, or a Shopify GID.
-    /// </summary>
-    [HttpPost("{orderId}/fulfill")]
-    public async Task<IActionResult> FulfillOrder(
-        string orderId,
-        [FromQuery] string? trackingNumber  = null,
-        [FromQuery] string? trackingCompany = null,
-        CancellationToken ct = default)
+    public OrdersController(IMediator mediator, IBackgroundJobClient jobs)
     {
-        var command = new FulfillOrderCommand(orderId, trackingNumber, trackingCompany);
-        var result  = await _mediator.Send(command, ct);
-        return Accepted(result);
+        _mediator = mediator;
+        _jobs     = jobs;
     }
 
     /// <summary>
-    /// Fulfills specific line items of the given order.
+    /// Enqueues a background job to fulfill all open fulfillment orders for the given order.
+    /// Returns 202 Accepted immediately with the Hangfire job ID — the actual Shopify API
+    /// call happens asynchronously, so the client is never blocked by Shopify latency or
+    /// rate limits.
+    /// orderId can be a local int Id, a Shopify numeric Id, or a Shopify GID.
+    /// </summary>
+    [HttpPost("{orderId}/fulfill")]
+    public IActionResult FulfillOrder(
+        string orderId,
+        [FromQuery] string? trackingNumber  = null,
+        [FromQuery] string? trackingCompany = null,
+        [FromQuery] bool    notifyCustomer  = true)
+    {
+        var jobId = _jobs.Enqueue<FulfillOrderJob>(
+            job => job.ExecuteAsync(orderId, trackingNumber, trackingCompany, notifyCustomer,
+                CancellationToken.None));
+
+        // Chain a notification job that fires only if fulfillment succeeds
+        _jobs.ContinueJobWith<SendFulfillmentNotificationJob>(
+            jobId,
+            job => job.ExecuteAsync(orderId, CancellationToken.None));
+
+        return Accepted(new { jobId, message = "Fulfillment enqueued." });
+    }
+
+    /// <summary>
+    /// Enqueues a background job to fulfill specific line items of the given order.
+    /// Returns 202 Accepted immediately with the Hangfire job ID.
     /// orderId can be a local int Id, a Shopify numeric Id, or a Shopify GID.
     /// </summary>
     [HttpPost("{orderId}/fulfill-items")]
-    public async Task<IActionResult> FulfillOrderLineItems(
+    public IActionResult FulfillOrderLineItems(
         string orderId,
-        [FromBody] PartialFulfillmentRequest request,
-        CancellationToken ct = default)
+        [FromBody] PartialFulfillmentRequest request)
     {
-        var command = new FulfillOrderLineItemsCommand(
-            orderId,
-            request.LineItemIds,
-            request.TrackingNumber,
-            request.TrackingCompany,
-            request.NotifyCustomer);
-        var result = await _mediator.Send(command, ct);
-        return Accepted(result);
+        var jobId = _jobs.Enqueue<FulfillOrderLineItemsJob>(
+            job => job.ExecuteAsync(
+                orderId,
+                request.LineItemIds,
+                request.TrackingNumber,
+                request.TrackingCompany,
+                request.NotifyCustomer,
+                CancellationToken.None));
+
+        // Chain a notification job that fires only if fulfillment succeeds
+        _jobs.ContinueJobWith<SendFulfillmentNotificationJob>(
+            jobId,
+            job => job.ExecuteAsync(orderId, CancellationToken.None));
+
+        return Accepted(new { jobId, message = "Partial fulfillment enqueued." });
     }
 
     /// <summary>

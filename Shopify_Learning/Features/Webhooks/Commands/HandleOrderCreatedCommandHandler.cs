@@ -62,6 +62,7 @@ public sealed class HandleOrderCreatedCommandHandler
                 FulfillmentStatus = payload.FulfillmentStatus ?? "unfulfilled",
                 TotalPrice        = decimal.Parse(payload.TotalPrice),
                 Currency          = payload.Currency,
+                Note              = payload.Note,
                 CustomerId        = customerId,
                 CancelledAt       = payload.CancelledAt?.ToUniversalTime(),
                 CreatedAt         = payload.CreatedAt.ToUniversalTime(),
@@ -78,6 +79,11 @@ public sealed class HandleOrderCreatedCommandHandler
                     ProductGid   = li.ProductId.HasValue ? ShopifyGidHelper.BuildProductGid(li.ProductId.Value) : string.Empty,
                     VariantGid   = li.VariantId.HasValue ? $"gid://shopify/ProductVariant/{li.VariantId.Value}" : string.Empty,
                 }).ToList<OrderLineItem>(),
+                NoteAttributes    = payload.NoteAttributes.Select(na => new OrderNoteAttribute
+                {
+                    Name  = na.Name,
+                    Value = na.Value,
+                }).ToList(),
             };
 
             await _orders.UpsertAsync(order, cancellationToken);

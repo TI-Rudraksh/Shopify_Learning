@@ -92,9 +92,13 @@ public sealed class OrderRepository : IOrderRepository
             existing.CancelledAt       = order.CancelledAt;
             existing.UpdatedAt         = order.UpdatedAt;
 
-            // Replace line items
+            // Replace line items (full sync)
             _db.OrderLineItems.RemoveRange(existing.LineItems);
             existing.LineItems = order.LineItems;
+
+            // Replace note attributes (full sync — Shopify is the source of truth)
+            _db.OrderNoteAttributes.RemoveRange(existing.NoteAttributes);
+            existing.NoteAttributes = order.NoteAttributes;
         }
 
         await _db.SaveChangesAsync(ct);

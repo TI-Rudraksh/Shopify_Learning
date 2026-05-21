@@ -1,6 +1,7 @@
 using MediatR;
 using ShopifyIntegration.Domain.Entities;
 using ShopifyIntegration.Domain.Repositories;
+using ShopifyIntegration.Infrastructure.Data;
 using ShopifyIntegration.Infrastructure.Data.Helpers;
 using ShopifyIntegration.Infrastructure.Shopify;
 
@@ -11,15 +12,18 @@ public sealed class AddOrderNoteAttributesCommandHandler
 {
     private readonly IOrderRepository                              _orders;
     private readonly IShopifyOrderService                          _shopifyOrders;
+    private readonly ShopifyDbContext                              _db;
     private readonly ILogger<AddOrderNoteAttributesCommandHandler> _logger;
 
     public AddOrderNoteAttributesCommandHandler(
         IOrderRepository                              orders,
         IShopifyOrderService                          shopifyOrders,
+        ShopifyDbContext                              db,
         ILogger<AddOrderNoteAttributesCommandHandler> logger)
     {
         _orders        = orders;
         _shopifyOrders = shopifyOrders;
+        _db            = db;
         _logger        = logger;
     }
 
@@ -73,12 +77,12 @@ public sealed class AddOrderNoteAttributesCommandHandler
         // ── Step 4: Persist locally ───────────────────────────────────────────────
         if (order is not null)
         {
-            // Update the note text on the order if provided
+            // Update the note text directly — no full upsert to avoid replacing line items
             if (command.Note is not null)
             {
                 order.Note      = command.Note;
                 order.UpdatedAt = DateTimeOffset.UtcNow;
-                await _orders.UpsertAsync(order, cancellationToken);
+                await _db.SaveChangesAsync(cancellationToken);
             }
 
             // Append new note attributes

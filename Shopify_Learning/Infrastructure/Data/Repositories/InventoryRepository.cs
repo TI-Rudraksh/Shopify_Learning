@@ -17,8 +17,14 @@ public sealed class InventoryRepository : IInventoryRepository
 
     public async Task<InventoryLevel> UpsertAsync(InventoryLevel level, CancellationToken ct = default)
     {
+        // Natural key is (inventory_item_gid, location_gid) — one row per
+        // inventory item per location. A product with multiple variants has
+        // multiple inventory items, so keying on product_id alone is wrong.
         var existing = await _db.InventoryLevels
-            .FirstOrDefaultAsync(il => il.ProductId == level.ProductId && il.LocationGid == level.LocationGid, ct);
+            .FirstOrDefaultAsync(
+                il => il.InventoryItemGid == level.InventoryItemGid
+                   && il.LocationGid      == level.LocationGid,
+                ct);
 
         if (existing is null)
         {
@@ -28,6 +34,7 @@ public sealed class InventoryRepository : IInventoryRepository
         }
         else
         {
+            existing.ProductId        = level.ProductId;
             existing.InventoryItemGid = level.InventoryItemGid;
             existing.Quantity         = level.Quantity;
             existing.Available        = level.Available;

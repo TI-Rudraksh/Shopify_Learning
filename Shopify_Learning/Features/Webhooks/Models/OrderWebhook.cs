@@ -22,6 +22,12 @@ public sealed class OrderWebhook
     [JsonProperty("currency")]
     public string Currency { get; set; } = string.Empty;
 
+    [JsonProperty("note")]
+    public string? Note { get; set; }
+
+    [JsonProperty("note_attributes")]
+    public List<OrderWebhookNoteAttribute> NoteAttributes { get; set; } = [];
+
     [JsonProperty("customer")]
     public OrderWebhookCustomer? Customer { get; set; }
 
@@ -36,6 +42,15 @@ public sealed class OrderWebhook
 
     [JsonProperty("cancelled_at")]
     public DateTimeOffset? CancelledAt { get; set; }
+}
+
+public sealed class OrderWebhookNoteAttribute
+{
+    [JsonProperty("name")]
+    public string Name { get; set; } = string.Empty;
+
+    [JsonProperty("value")]
+    public string Value { get; set; } = string.Empty;
 }
 
 public sealed class OrderWebhookCustomer

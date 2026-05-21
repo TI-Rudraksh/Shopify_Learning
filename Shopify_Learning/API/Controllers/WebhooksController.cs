@@ -1,7 +1,7 @@
-using MediatR;
+using Hangfire;
 using Microsoft.AspNetCore.Mvc;
-using ShopifyIntegration.Features.Webhooks.Commands;
 using ShopifyIntegration.Infrastructure.Shopify.Validators;
+using ShopifyIntegration.Jobs;
 
 namespace ShopifyIntegration.API.Controllers;
 
@@ -9,15 +9,27 @@ namespace ShopifyIntegration.API.Controllers;
 [Route("api/webhooks")]
 public sealed class WebhooksController : ControllerBase
 {
-    private readonly IMediator _mediator;
+    private readonly IBackgroundJobClient _jobs;
     private readonly IShopifyWebhookValidator _validator;
 
-    public WebhooksController(IMediator mediator, IShopifyWebhookValidator validator)
+    public WebhooksController(IBackgroundJobClient jobs, IShopifyWebhookValidator validator)
     {
-        _mediator  = mediator;
+        _jobs      = jobs;
         _validator = validator;
     }
 
+    /// <summary>
+    /// Receives a Shopify webhook, validates the HMAC signature, then immediately
+    /// enqueues a ProcessWebhookJob and returns 200 OK to Shopify (under 5 ms).
+    ///
+    /// Processing happens asynchronously in the background. Hangfire retries
+    /// automatically on failure (3 attempts: 60 s → 300 s → 900 s), replacing
+    /// the need for the manual WebhookReprocessorJob for newly-ingested events.
+    ///
+    /// This eliminates the risk of Shopify timing out and re-delivering the same
+    /// webhook, which previously caused duplicate-processing pressure on the
+    /// idempotency checks.
+    /// </summary>
     [HttpPost("shopify")]
     public async Task<IActionResult> ReceiveShopifyWebhook(CancellationToken ct)
     {
@@ -37,8 +49,10 @@ public sealed class WebhooksController : ControllerBase
         if (!validation.IsValid)
             return Unauthorized();
 
-        await _mediator.Send(
-            new ProcessShopifyWebhookCommand(rawBody, topicValues.ToString()), ct);
+        // Enqueue and return immediately — Shopify gets 200 in < 5 ms
+        _jobs.Enqueue<ProcessWebhookJob>(
+            job => job.ExecuteAsync(rawBody, topicValues.ToString(), CancellationToken.None));
+
         return Ok();
     }
 }
