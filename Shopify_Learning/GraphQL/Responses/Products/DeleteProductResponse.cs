@@ -1,4 +1,4 @@
-using ShopifySharp.GraphQL;
+using ShopifyIntegration.GraphQL.Responses.Shared;
 
 namespace ShopifyIntegration.GraphQL.Responses.Products;
 
@@ -9,7 +9,6 @@ public class DeleteProductResponse
 
 public class ProductDeletePayload
 {
-    public string? DeletedProductId { get; set; }
-
-    public List<UserError>? UserErrors { get; set; }
+    public string?                  DeletedProductId { get; set; }
+    public List<GraphQLUserError>?  UserErrors       { get; set; }
 }

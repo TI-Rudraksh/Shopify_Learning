@@ -1,5 +1,5 @@
 using ShopifyIntegration.GraphQL.Responses.Products.Shared;
-using UserError = ShopifySharp.GraphQL.UserError;
+using ShopifyIntegration.GraphQL.Responses.Shared;
 
 namespace ShopifyIntegration.GraphQL.Responses.Products;
 
@@ -10,7 +10,6 @@ public class UpdateProductResponse
 
 public class ProductUpdatePayload
 {
-    public ShopifyProduct? Product { get; set; }
-
-    public List<UserError>? UserErrors { get; set; }
+    public ShopifyProduct?         Product    { get; set; }
+    public List<GraphQLUserError>? UserErrors { get; set; }
 }

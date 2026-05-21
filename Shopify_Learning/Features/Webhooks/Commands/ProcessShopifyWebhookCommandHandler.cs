@@ -96,6 +96,19 @@ public sealed class ProcessShopifyWebhookCommandHandler
                 await _mediator.Send(new HandleFulfillmentCreatedCommand(payload), cancellationToken);
                 break;
             }
+            case "fulfillments/update":
+            {
+                var payload = JsonConvert.DeserializeObject<FulfillmentWebhook>(json)!;
+                await _mediator.Send(new HandleFulfillmentUpdatedCommand(payload), cancellationToken);
+                break;
+            }
+            case "inventory_levels/update":
+            case "inventory_levels/connect":
+            {
+                var payload = JsonConvert.DeserializeObject<InventoryLevelWebhook>(json)!;
+                await _mediator.Send(new HandleInventoryLevelUpdatedCommand(payload), cancellationToken);
+                break;
+            }
             default:
                 await _webhookEvents.AddAsync(new WebhookEvent
                 {

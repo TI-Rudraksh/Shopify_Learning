@@ -1,3 +1,5 @@
+using ShopifyIntegration.GraphQL.Responses.Shared;
+
 namespace ShopifyIntegration.GraphQL.Responses.Inventory;
 
 public class ActivateInventoryItemResponse
@@ -7,5 +9,5 @@ public class ActivateInventoryItemResponse
 
 public class InventoryBulkToggleActivationPayload
 {
-    public List<InventoryUserError>? UserErrors { get; set; }
+    public List<GraphQLUserError>? UserErrors { get; set; }
 }

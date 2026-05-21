@@ -32,6 +32,18 @@ public sealed class FulfillmentRepository : IFulfillmentRepository
             existing.TrackingUrl         = fulfillment.TrackingUrl;
             existing.FulfillmentOrderGid = fulfillment.FulfillmentOrderGid;
             existing.UpdatedAt           = fulfillment.UpdatedAt;
+
+            // Only overwrite OrderId if the caller resolved a real one (> 0).
+            // The fulfillments/update webhook handler passes 0 as a placeholder
+            // when the order isn't found locally — we must not corrupt the FK.
+            if (fulfillment.OrderId > 0)
+                existing.OrderId = fulfillment.OrderId;
+
+            // Preserve FulfilledLineItemGids set by the outbound fulfillment path.
+            // Webhook-driven updates don't carry line item GIDs, so we never
+            // overwrite a non-null value with null here.
+            if (!string.IsNullOrWhiteSpace(fulfillment.FulfilledLineItemGids))
+                existing.FulfilledLineItemGids = fulfillment.FulfilledLineItemGids;
         }
 
         await _db.SaveChangesAsync(ct);
